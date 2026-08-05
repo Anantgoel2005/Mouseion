@@ -1,6 +1,6 @@
 {
   "name": "the-alexandrian-reader",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A private offline PDF and EPUB library inspired by the Library of Alexandria.",
   "author": "The Alexandrian",
   "private": true,
@@ -15,6 +15,7 @@
   "dependencies": {
     "epubjs": "^0.3.93",
     "jszip": "^3.10.1",
+    "pdfjs-dist": "^6.2.108",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   },
@@ -32,10 +33,29 @@
   "build": {
     "appId": "com.alexandrian.reader",
     "productName": "The Alexandrian",
-    "directories": { "output": "release" },
-    "files": ["electron/**/*", "desktop-dist/**/*", "package.json"],
-    "win": { "target": ["nsis", "portable"] },
-    "nsis": { "artifactName": "The-Alexandrian-Setup-${version}-${arch}.${ext}", "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true },
-    "portable": { "artifactName": "The-Alexandrian-Portable-${version}-${arch}.${ext}" }
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "desktop-dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "artifactName": "The-Alexandrian-Setup-${version}-${arch}.${ext}",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "portable": {
+      "artifactName": "The-Alexandrian-Portable-${version}-${arch}.${ext}"
+    }
   }
 }

@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const { pathToFileURL } = require("node:url");
 const JSZip = require("jszip");
 
-protocol.registerSchemesAsPrivileged([{ scheme:"alexandria-file", privileges:{ secure:true, standard:true, supportFetchAPI:true, stream:true } }]);
+protocol.registerSchemesAsPrivileged([{ scheme:"alexandria-file", privileges:{ secure:true, standard:true, supportFetchAPI:true, stream:true, corsEnabled:true } }]);
 const palette=["terracotta","lapis","olive","wine","bronze","sand"];
 const cataloguePath=()=>path.join(app.getPath("userData"),"library.json");
 const readLibrary=()=>{try{const data=JSON.parse(fs.readFileSync(cataloguePath(),"utf8"));return Array.isArray(data)?data:[]}catch{return[]}};

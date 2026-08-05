@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import PdfReader from "./PdfReader";
 
 type Volume = { id:number; title:string; author?:string; format:"EPUB"|"PDF"; progress:number; color:string; glyph:string; size:number; fileUrl:string; favorite?:boolean; location?:string };
 type TocItem = { label:string; href:string };
@@ -70,7 +71,7 @@ export default function Home() {
     </section>
     {active&&<div className="reader"><div className="reader-top"><button onClick={()=>setActive(null)}>← <span>Return to the Library</span></button><div><b>{active.title}</b>{active.author&&<span>{active.author}</span>}</div><button className="remove-reader" onClick={removeBook} title="Remove from library">Remove</button></div>
       <aside><p>{active.format==="EPUB"?"CONTENTS":"DOCUMENT"}</p>{active.format==="EPUB"?(toc.length?toc.map((x,i)=><button key={`${x.href}-${i}`} onClick={()=>renditionRef.current?.display(x.href)}><span>{String(i+1).padStart(2,"0")}</span>{x.label}</button>):<div className="toc-loading">Preparing contents…</div>):<div className="pdf-note"><b>PDF READER</b><span>Use the built-in toolbar to zoom, search, print, or save a copy.</span></div>}</aside>
-      <article className="reading-page">{active.format==="PDF"?<iframe src={active.fileUrl} title={active.title}/>:readerError?<div className="reader-error">{readerError}</div>:<div ref={epubRef} className="epub-viewer"/>}</article>
+      <article className={`reading-page ${active.format==="PDF"?"pdf-reading-page":""}`}>{active.format==="PDF"?<PdfReader url={active.fileUrl} title={active.title} initialProgress={active.progress} onProgress={p=>window.alexandria?.updateReading(active.id,p)}/>:readerError?<div className="reader-error">{readerError}</div>:<div ref={epubRef} className="epub-viewer"/>}</article>
       <div className="reader-bottom">{active.format==="EPUB"?<><button onClick={()=>renditionRef.current?.prev()}>‹</button><div><i style={{width:`${readerProgress}%`}}/></div><span>{readerProgress}%</span><button onClick={()=>renditionRef.current?.next()}>›</button></>:<span>PDF · Stored locally · Available offline</span>}</div>
     </div>}
     {notice&&<div className="toast">✓ {notice}</div>}
