@@ -1,0 +1,17 @@
+const {app,BrowserWindow,ipcMain,protocol,net}=require("electron");
+const {PDFDocument,StandardFonts,rgb}=require("pdf-lib");
+const fs=require("node:fs");const os=require("node:os");const path=require("node:path");const {pathToFileURL}=require("node:url");
+const {createCatalogue}=require("../electron/catalogue.cjs");
+protocol.registerSchemesAsPrivileged([{scheme:"alexandria-file",privileges:{secure:true,standard:true,supportFetchAPI:true,stream:true,corsEnabled:true}}]);
+
+async function fixture(file){const pdf=await PDFDocument.create();const font=await pdf.embedFont(StandardFonts.TimesRoman);for(let n=1;n<=3;n++){const page=pdf.addPage([612,792]);page.drawText(`Alexandrian Reader Test — Page ${n}`,{x:72,y:700,size:22,font,color:rgb(.2,.15,.1)});page.drawText("A real local PDF rendered entirely offline.",{x:72,y:660,size:13,font})}fs.writeFileSync(file,await pdf.save())}
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+
+app.whenReady().then(async()=>{const temp=fs.mkdtempSync(path.join(os.tmpdir(),"alexandrian-electron-"));const pdf=path.join(temp,"Audit Volume.pdf");await fixture(pdf);const catalogue=createCatalogue(path.join(temp,"library.json"));await catalogue.addPaths([pdf]);
+  protocol.handle("alexandria-file",request=>{const url=new URL(request.url);return net.fetch(pathToFileURL(decodeURIComponent(url.pathname.slice(1))).toString())});ipcMain.handle("library:list",()=>catalogue.list());ipcMain.handle("library:reading",(_e,id,p,l)=>catalogue.updateReading(id,p,l));ipcMain.handle("library:favorite",(_e,id)=>catalogue.toggleFavorite(id));ipcMain.handle("library:remove",(_e,id)=>catalogue.remove(id));ipcMain.handle("library:choose",()=>catalogue.list());ipcMain.handle("library:add-paths",()=>catalogue.list());
+  const win=new BrowserWindow({show:false,width:1200,height:800,webPreferences:{preload:path.join(__dirname,"..","electron","preload.cjs"),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true}});await win.loadFile(path.join(__dirname,"..","desktop-dist","index.html"));await wait(500);
+  const cards=await win.webContents.executeJavaScript('document.querySelectorAll(".book-card").length');if(cards!==1)throw new Error(`Expected one imported book, found ${cards}`);await win.webContents.executeJavaScript('document.querySelector(".book-card").click()');await wait(2500);
+  const first=await win.webContents.executeJavaScript('({canvas:document.querySelector(".pdf-page-stage canvas")?.width||0,error:document.querySelector(".reader-error")?.textContent||"",page:document.querySelector(".pdf-tools-group input")?.value,toolbar:!!document.querySelector(".pdf-toolbar")})');if(!first.toolbar||first.canvas<100||first.error||first.page!=="1")throw new Error(`PDF reader failed: ${JSON.stringify(first)}`);
+  await win.webContents.executeJavaScript('document.querySelector(".pdf-tools-group:first-child button:last-child").click()');await wait(900);const second=await win.webContents.executeJavaScript('({page:document.querySelector(".pdf-tools-group input").value,canvas:document.querySelector(".pdf-page-stage canvas").width})');if(second.page!=="2"||second.canvas<100)throw new Error(`Page traversal failed: ${JSON.stringify(second)}`);
+  console.log("Electron smoke test passed: library load, PDF render, and page traversal");win.destroy();fs.rmSync(temp,{recursive:true,force:true});app.quit();
+}).catch(error=>{console.error(error);app.exit(1)});

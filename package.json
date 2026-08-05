@@ -1,6 +1,6 @@
 {
   "name": "the-alexandrian-reader",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "A private offline PDF and EPUB library inspired by the Library of Alexandria.",
   "author": "The Alexandrian",
   "private": true,
@@ -8,9 +8,10 @@
   "scripts": {
     "desktop:dev": "vite --config vite.desktop.config.ts",
     "desktop:start": "electron .",
+    "smoke": "electron tests/electron-smoke.cjs",
     "desktop:build": "vite build --config vite.desktop.config.ts && electron-builder --win nsis portable",
     "build": "vite build --config vite.desktop.config.ts",
-    "test": "npm run build"
+    "test": "npm run build && node --test tests/catalogue.test.cjs"
   },
   "dependencies": {
     "epubjs": "^0.3.93",
@@ -26,6 +27,7 @@
     "@vitejs/plugin-react": "6.0.2",
     "electron": "^43.3.0",
     "electron-builder": "^26.15.3",
+    "pdf-lib": "^1.17.1",
     "typescript": "5.9.3",
     "vite": "8.0.13"
   },
