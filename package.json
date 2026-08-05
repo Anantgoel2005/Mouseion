@@ -1,6 +1,6 @@
 {
   "name": "the-alexandrian-reader",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A private offline PDF and EPUB library inspired by the Library of Alexandria.",
   "author": "The Alexandrian",
   "private": true,
