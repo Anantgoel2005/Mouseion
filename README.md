@@ -4,6 +4,13 @@ Mouseion is a private, offline-first PDF and EPUB library for Windows, inspired 
 
 ![Mouseion icon](build/icon.png)
 
+## Download
+
+- [Windows installer](https://github.com/Anantgoel2005/Mouseion/releases/latest/download/Mouseion-Setup-1.2.0-x64.exe)
+- [Portable edition](https://github.com/Anantgoel2005/Mouseion/releases/latest/download/Mouseion-Portable-1.2.0-x64.exe) — run directly without installing or building the project
+
+All published builds are available on the [Releases page](https://github.com/Anantgoel2005/Mouseion/releases).
+
 ## Features
 
 - Local PDF and EPUB catalogue—books never leave your computer
