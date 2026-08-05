@@ -1,8 +1,8 @@
 {
   "name": "the-alexandrian-reader",
-  "version": "1.1.0",
-  "description": "A private offline PDF and EPUB library inspired by the Library of Alexandria.",
-  "author": "The Alexandrian",
+  "version": "1.2.0",
+  "description": "Mouseion — a private offline PDF and EPUB library inspired by ancient Alexandria.",
+  "author": "Mouseion",
   "private": true,
   "main": "electron/main.cjs",
   "scripts": {
@@ -34,7 +34,7 @@
   "type": "module",
   "build": {
     "appId": "com.alexandrian.reader",
-    "productName": "The Alexandrian",
+    "productName": "Mouseion",
     "directories": {
       "output": "release"
     },
@@ -44,20 +44,21 @@
       "package.json"
     ],
     "win": {
+      "icon": "build/icon.ico",
       "target": [
         "nsis",
         "portable"
       ]
     },
     "nsis": {
-      "artifactName": "The-Alexandrian-Setup-${version}-${arch}.${ext}",
+      "artifactName": "Mouseion-Setup-${version}-${arch}.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
     },
     "portable": {
-      "artifactName": "The-Alexandrian-Portable-${version}-${arch}.${ext}"
+      "artifactName": "Mouseion-Portable-${version}-${arch}.${ext}"
     }
   }
 }

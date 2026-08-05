@@ -1,16 +1,21 @@
 const {app,BrowserWindow,dialog,ipcMain,protocol,net}=require("electron");
 const path=require("node:path");
+const fs=require("node:fs");
 const {pathToFileURL}=require("node:url");
 const {createCatalogue}=require("./catalogue.cjs");
 
+const mouseionData=path.join(app.getPath("appData"),"Mouseion");
+if(!fs.existsSync(path.join(mouseionData,"library.json"))){for(const legacyName of ["The Alexandrian","the-alexandrian-reader"]){const legacy=path.join(app.getPath("appData"),legacyName,"library.json");if(fs.existsSync(legacy)){fs.mkdirSync(mouseionData,{recursive:true});fs.copyFileSync(legacy,path.join(mouseionData,"library.json"));break}}}
+app.setPath("userData",mouseionData);
+
 protocol.registerSchemesAsPrivileged([{scheme:"alexandria-file",privileges:{secure:true,standard:true,supportFetchAPI:true,stream:true,corsEnabled:true}}]);
-function createWindow(){const win=new BrowserWindow({width:1440,height:920,minWidth:900,minHeight:650,show:true,backgroundColor:"#f2ead8",title:"The Alexandrian",autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,"preload.cjs"),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true}});win.webContents.setWindowOpenHandler(()=>({action:"deny"}));win.loadFile(path.join(__dirname,"..","desktop-dist","index.html"))}
+function createWindow(){const win=new BrowserWindow({width:1440,height:920,minWidth:900,minHeight:650,show:true,backgroundColor:"#f2ead8",title:"Mouseion",icon:path.join(__dirname,"..","desktop-dist","icon.png"),autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,"preload.cjs"),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true}});win.webContents.setWindowOpenHandler(()=>({action:"deny"}));win.loadFile(path.join(__dirname,"..","desktop-dist","index.html"))}
 
 if(!app.requestSingleInstanceLock()){app.quit()}else{
   app.whenReady().then(()=>{const catalogue=createCatalogue(path.join(app.getPath("userData"),"library.json"));
     protocol.handle("alexandria-file",request=>{const url=new URL(request.url);return net.fetch(pathToFileURL(decodeURIComponent(url.pathname.slice(1))).toString())});
     ipcMain.handle("library:list",()=>catalogue.list());
-    ipcMain.handle("library:choose",async()=>{const result=await dialog.showOpenDialog({title:"Add books to The Alexandrian",properties:["openFile","multiSelections"],filters:[{name:"PDF and EPUB books",extensions:["pdf","epub"]}]});return result.canceled?catalogue.list():catalogue.addPaths(result.filePaths)});
+    ipcMain.handle("library:choose",async()=>{const result=await dialog.showOpenDialog({title:"Add books to Mouseion",properties:["openFile","multiSelections"],filters:[{name:"PDF and EPUB books",extensions:["pdf","epub"]}]});return result.canceled?catalogue.list():catalogue.addPaths(result.filePaths)});
     ipcMain.handle("library:add-paths",(_e,paths)=>catalogue.addPaths(Array.isArray(paths)?paths:[]));
     ipcMain.handle("library:reading",(_e,id,progress,location)=>catalogue.updateReading(id,progress,location));
     ipcMain.handle("library:favorite",(_e,id)=>catalogue.toggleFavorite(id));

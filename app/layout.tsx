@@ -6,7 +6,7 @@ const serif = Cormorant_Garamond({ variable: "--font-serif", subsets: ["latin"],
 const sans = Inter({ variable: "--font-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "The Alexandrian — Your Private Library",
+  title: "Mouseion — Your Private Library",
   description: "A beautiful private sanctuary for your PDF and EPUB collection.",
 };
 
