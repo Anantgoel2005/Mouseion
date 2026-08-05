@@ -1,6 +1,4 @@
-@import "tailwindcss";
-
-:root { --ink:#29251f; --papyrus:#f2ead8; --paper:#f8f4e9; --bronze:#a97838; --bronze-light:#d4b270; --deep:#142f2a; --muted:#817969; }
+:root { --ink:#29251f; --papyrus:#f2ead8; --paper:#f8f4e9; --bronze:#a97838; --bronze-light:#d4b270; --deep:#142f2a; --muted:#817969; --font-serif:Georgia,"Times New Roman",serif; --font-sans:"Segoe UI",Arial,sans-serif; }
 * { box-sizing:border-box; }
 html { scroll-behavior:smooth; }
 body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--font-sans),sans-serif; }
@@ -51,3 +49,4 @@ footer { margin:0 44px; height:75px; border-top:1px solid #bdae932e; display:fle
 @media(max-width:760px){.sidebar{width:72px;padding:28px 10px}.brand>span:last-child,nav p,nav button:not(.nav-active),nav button b,.quote,.settings span{display:none}.brand{padding:0 5px 28px}.brand-mark{width:40px}.nav-active{justify-content:center}.content{margin-left:72px}header{padding:0 20px}.search{width:min(340px,75vw)}.search kbd{display:none}.hero{padding:35px 25px}.hero h1{font-size:37px}.temple{display:none}.toolbar{margin:0 22px}.filters{gap:14px}.filters button{font-size:8px}.tools>button:not(.import-button){display:none}.import-button span{display:none}.library{padding:28px 22px;grid-template-columns:repeat(2,1fr);gap:28px 18px}.reader{grid-template:58px 1fr 45px / 1fr}.reader>aside{display:none}.reader-top{grid-template-columns:90px 1fr 45px}.reader-top button:first-child{padding-left:15px}.reader-top button span{display:none}.page-paper{padding:45px 28px;font-size:17px}.reading-page{padding:15px 10px}.reader-bottom{grid-column:1}.stats{gap:15px}.stats>i{display:none}}
 @media(max-width:420px){.header-actions{display:none}.library{grid-template-columns:1fr 1fr}.hero{min-height:245px}.stats div:nth-of-type(2){display:none}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.epub-viewer { width:min(820px,100%); height:100%; min-height:700px; background:#f9f4e8; box-shadow:0 8px 35px #493b2828; }

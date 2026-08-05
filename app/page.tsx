@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Volume = {
   id: number;
@@ -13,6 +13,16 @@ type Volume = {
   pages: number;
   fileUrl?: string;
 };
+
+declare global {
+  interface Window {
+    alexandria?: {
+      chooseBooks: () => Promise<Volume[]>;
+      getLibrary: () => Promise<Volume[]>;
+      updateProgress: (id: number, progress: number) => Promise<void>;
+    };
+  }
+}
 
 const seedVolumes: Volume[] = [
   { id: 1, title: "Meditations", author: "Marcus Aurelius", format: "EPUB", progress: 68, color: "terracotta", glyph: "M", pages: 254 },
@@ -34,6 +44,25 @@ export default function Home() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [notice, setNotice] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const epubRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    window.alexandria?.getLibrary().then((saved) => { if (saved.length) setVolumes(saved); });
+  }, []);
+
+  useEffect(() => {
+    if (!active?.fileUrl || active.format !== "EPUB" || !epubRef.current) return;
+    let rendition: any;
+    let cancelled = false;
+    import("epubjs").then(({ default: ePub }) => {
+      if (cancelled || !epubRef.current) return;
+      const book = ePub(active.fileUrl);
+      rendition = book.renderTo(epubRef.current, { width: "100%", height: "100%", spread: "none" });
+      rendition.display();
+      rendition.themes.default({ body: { background: "#f9f4e8", color: "#352f27", "font-family": "Georgia, serif", "font-size": "112%", "line-height": "1.7", padding: "24px 8%" } });
+    });
+    return () => { cancelled = true; rendition?.destroy(); };
+  }, [active]);
 
   const filtered = useMemo(() => volumes.filter((v) => {
     const matches = `${v.title} ${v.author}`.toLowerCase().includes(query.toLowerCase());
@@ -58,6 +87,15 @@ export default function Home() {
     setVolumes((current) => [...added, ...current]);
     setShowImport(false);
     setNotice(`${added.length} ${added.length === 1 ? "volume" : "volumes"} added to the collection.`);
+    window.setTimeout(() => setNotice(""), 3200);
+  }
+
+  async function chooseDesktopBooks() {
+    if (!window.alexandria) { setShowImport(true); return; }
+    const saved = await window.alexandria.chooseBooks();
+    if (!saved.length) return;
+    setVolumes(saved);
+    setNotice("Your new volumes have been catalogued for offline reading.");
     window.setTimeout(() => setNotice(""), 3200);
   }
 
@@ -116,7 +154,7 @@ export default function Home() {
           <div className="filters">
             {["All works", "In progress", "EPUB", "PDF"].map(item => <button key={item} className={filter === item ? "selected" : ""} onClick={() => setFilter(item)}>{item}</button>)}
           </div>
-          <div className="tools"><button className={view === "grid" ? "chosen" : ""} onClick={() => setView("grid")} aria-label="Grid view">▦</button><button className={view === "list" ? "chosen" : ""} onClick={() => setView("list")} aria-label="List view">☷</button><button className="import-button" onClick={() => setShowImport(true)}>＋ <span>ADD A VOLUME</span></button></div>
+          <div className="tools"><button className={view === "grid" ? "chosen" : ""} onClick={() => setView("grid")} aria-label="Grid view">▦</button><button className={view === "list" ? "chosen" : ""} onClick={() => setView("list")} aria-label="List view">☷</button><button className="import-button" onClick={chooseDesktopBooks}>＋ <span>ADD A VOLUME</span></button></div>
         </div>
 
         <div className={`library ${view}`}>
@@ -154,7 +192,7 @@ export default function Home() {
         <div className="reader-top"><button onClick={() => setActive(null)}>← <span>Return to the Library</span></button><div><b>{active.title}</b><span>{active.author}</span></div><button aria-label="Reader settings">Aa</button></div>
         <aside><p>CONTENTS</p>{chapters.map((c, i) => <button key={c} className={i === 0 ? "current" : ""}><span>{String(i + 1).padStart(2,"0")}</span>{c}</button>)}</aside>
         <article className="reading-page">
-          {active.fileUrl && active.format === "PDF" ? <iframe src={active.fileUrl} title={active.title} /> : <div className="page-paper"><p className="book-number">BOOK I</p><h1>{active.title}</h1><div className="ornament">— ❦ —</div><p className="dropcap">The things in our control are opinion, pursuit, desire, aversion, and, in a word, whatever are our own actions. The things not in our control are body, property, reputation, command, and whatever are not our own actions.</p><p>Remember, then, that if you suppose the things which are by nature slavish to be free, and the things which are in the power of others to be your own, you will be hindered; you will lament; you will be disturbed.</p><blockquote>“It is not things themselves that trouble us, but our opinions of things.”</blockquote><p>Seek not that the things which happen should happen as you wish; but wish the things which happen to be as they are, and you will have a tranquil flow of life.</p></div>}
+          {active.fileUrl && active.format === "PDF" ? <iframe src={active.fileUrl} title={active.title} /> : active.fileUrl && active.format === "EPUB" ? <div ref={epubRef} className="epub-viewer" /> : <div className="page-paper"><p className="book-number">BOOK I</p><h1>{active.title}</h1><div className="ornament">— ❦ —</div><p className="dropcap">The things in our control are opinion, pursuit, desire, aversion, and, in a word, whatever are our own actions. The things not in our control are body, property, reputation, command, and whatever are not our own actions.</p><p>Remember, then, that if you suppose the things which are by nature slavish to be free, and the things which are in the power of others to be your own, you will be hindered; you will lament; you will be disturbed.</p><blockquote>“It is not things themselves that trouble us, but our opinions of things.”</blockquote><p>Seek not that the things which happen should happen as you wish; but wish the things which happen to be as they are, and you will have a tranquil flow of life.</p></div>}
         </article>
         <div className="reader-bottom"><button>‹</button><div><i style={{width: `${active.progress || 8}%`}} /></div><span>{active.progress || 8}%</span><button>›</button></div>
       </div>}
