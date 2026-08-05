@@ -59,6 +59,10 @@ The Windows installer and portable executable are written to `release/`. Release
 
 Mouseion has no account, analytics, cloud storage, or network dependency. Its catalogue is stored in the local application-data directory, while book files remain in their original locations.
 
+## Windows SmartScreen
+
+Mouseion is not yet signed with a commercial code-signing certificate. Windows may show an “unrecognized app” warning when opening a downloaded release. Download executables only from this repository's official [Releases page](https://github.com/Anantgoel2005/Mouseion/releases). See [SECURITY.md](SECURITY.md) for reporting and integrity guidance.
+
 ## License
 
-No license has been selected yet. Add a license before accepting outside contributions or redistributing modified builds.
+Mouseion is available under the [MIT License](LICENSE).
