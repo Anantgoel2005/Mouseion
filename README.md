@@ -11,7 +11,11 @@
   [![Platform: Windows](https://img.shields.io/badge/platform-Windows-173b34.svg)](#download)
 </div>
 
-![Mouseion library showing an offline PDF and EPUB collection](docs/assets/library.png)
+![Mouseion demo showing the private library, search, favourites, EPUB reading, and PDF page traversal](docs/assets/demo.gif)
+
+<div align="center">
+  <sub>Real application states captured by the Electron smoke test. <a href="https://github.com/Anantgoel2005/Mouseion/releases/download/v1.3.0/Mouseion-demo-v1.3.0.mp4">Watch the full-quality MP4</a>.</sub>
+</div>
 
 ## Why Mouseion
 
@@ -41,6 +45,15 @@ Download the newest Windows installer or portable edition from the [latest GitHu
 - **Portable:** runs directly without installation and is convenient for removable or temporary environments.
 
 Mouseion currently targets 64-bit Windows 10 and newer. The release is not commercially code-signed, so Windows SmartScreen may show an “unrecognized app” warning. See [Security](#security-and-privacy) before running a downloaded binary.
+
+For checksum verification, SmartScreen guidance, installer steps, portable usage, upgrades, and uninstallation, follow the [Windows installation guide](docs/INSTALLATION.md).
+
+### Quick install
+
+1. Download `Mouseion-Setup-1.3.0-x64.exe` and `SHA256SUMS.txt` from the [v1.3.0 release](https://github.com/Anantgoel2005/Mouseion/releases/tag/v1.3.0).
+2. Verify the installer with `Get-FileHash .\Mouseion-Setup-1.3.0-x64.exe -Algorithm SHA256`.
+3. Run the installer, choose the destination, and launch Mouseion from the Start menu or desktop shortcut.
+4. Select **Add books** and choose local PDF or EPUB files. Mouseion catalogues them without copying or uploading them.
 
 ## Architecture
 
@@ -82,6 +95,13 @@ npm run desktop:package
 ```
 
 `npm run verify` performs a TypeScript check, production renderer build, catalogue and protocol tests, a real Electron smoke test, and a high-severity dependency audit. The smoke test creates temporary PDF and EPUB fixtures, opens both formats in the sandboxed desktop app, validates rendering and page traversal, and deletes the fixtures afterward.
+
+Set `MOUSEION_DEMO_DIR` before running the smoke test to capture the reproducible README demo states:
+
+```powershell
+$env:MOUSEION_DEMO_DIR = "$PWD\demo-frames"
+npm run smoke
+```
 
 Every pull request also runs the verification suite, creates an unpacked Windows package, and receives CodeQL analysis. Dependabot keeps npm packages and GitHub Actions under review.
 
