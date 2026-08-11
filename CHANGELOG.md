@@ -4,6 +4,15 @@ Notable changes to Mouseion are documented here. Versions follow [Semantic Versi
 
 ## [Unreleased]
 
+### Added
+
+- A reproducible animated product walkthrough generated from real Electron smoke-test states.
+- A complete Windows installation, checksum, upgrade, portable-use, and uninstallation guide.
+
+### Changed
+
+- Expanded the Electron smoke flow to cover favourites, catalogue search, reading progress, and second-page render completion.
+
 ## [1.3.0] - 2026-08-11
 
 ### Added

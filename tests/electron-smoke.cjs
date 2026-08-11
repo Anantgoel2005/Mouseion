@@ -26,14 +26,14 @@ async function pdfFixture(filePath) {
   const font = await pdf.embedFont(StandardFonts.TimesRoman);
   for (let number = 1; number <= 3; number += 1) {
     const page = pdf.addPage([612, 792]);
-    page.drawText(`Mouseion smoke test — Page ${number}`, {
+    page.drawText(`Meditations - Book ${number}`, {
       x: 72,
       y: 700,
       size: 22,
       font,
       color: rgb(0.2, 0.15, 0.1),
     });
-    page.drawText("A real local PDF rendered entirely offline.", {
+    page.drawText("The happiness of your life depends upon the quality of your thoughts.", {
       x: 72,
       y: 660,
       size: 13,
@@ -52,15 +52,15 @@ async function epubFixture(filePath) {
   );
   zip.file(
     "OEBPS/content.opf",
-    '<?xml version="1.0" encoding="UTF-8"?><package version="3.0" unique-identifier="id" xmlns="http://www.idpf.org/2007/opf"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">mouseion-smoke</dc:identifier><dc:title>EPUB Smoke Book</dc:title><dc:creator>Mouseion Test</dc:creator><dc:language>en</dc:language><meta property="dcterms:modified">2026-08-11T00:00:00Z</meta></metadata><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/><item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="chapter"/></spine></package>',
+    '<?xml version="1.0" encoding="UTF-8"?><package version="3.0" unique-identifier="id" xmlns="http://www.idpf.org/2007/opf"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">mouseion-smoke</dc:identifier><dc:title>The Odyssey</dc:title><dc:creator>Homer</dc:creator><dc:language>en</dc:language><meta property="dcterms:modified">2026-08-11T00:00:00Z</meta></metadata><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/><item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="chapter"/></spine></package>',
   );
   zip.file(
     "OEBPS/nav.xhtml",
-    '<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Contents</title></head><body><nav epub:type="toc"><ol><li><a href="chapter.xhtml">The First Scroll</a></li></ol></nav></body></html>',
+    '<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Contents</title></head><body><nav epub:type="toc"><ol><li><a href="chapter.xhtml">Book I</a></li></ol></nav></body></html>',
   );
   zip.file(
     "OEBPS/chapter.xhtml",
-    '<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>The First Scroll</title></head><body><h1>The First Scroll</h1><p>Knowledge endures in the Mouseion.</p></body></html>',
+    '<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Book I</title></head><body><h1>Book I</h1><p>Tell me, Muse, of the man of many ways.</p></body></html>',
   );
   fs.writeFileSync(
     filePath,
@@ -92,12 +92,20 @@ async function capture(window, outputPath) {
   fs.writeFileSync(outputPath, image.toPNG());
 }
 
+async function captureDemoStep(window, fileName) {
+  if (!process.env.MOUSEION_DEMO_DIR) return;
+  // Let React state, book-cover entrances, and reader transitions settle so the
+  // generated portfolio demo represents the finished UI rather than mid-motion frames.
+  await wait(1000);
+  await capture(window, path.join(process.env.MOUSEION_DEMO_DIR, fileName));
+}
+
 app
   .whenReady()
   .then(async () => {
     const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "mouseion-electron-"));
-    const pdf = path.join(temporary, "Audit Volume.pdf");
-    const epub = path.join(temporary, "EPUB Smoke Book.epub");
+    const pdf = path.join(temporary, "Meditations.pdf");
+    const epub = path.join(temporary, "The Odyssey.epub");
     await Promise.all([pdfFixture(pdf), epubFixture(epub)]);
 
     const catalogue = createCatalogue(path.join(temporary, "library.json"));
@@ -141,9 +149,47 @@ app
       "Library rendering",
     );
     await capture(window, process.env.MOUSEION_LIBRARY_SCREENSHOT);
+    await captureDemoStep(window, "01-library.png");
 
     await window.webContents.executeJavaScript(
-      'Array.from(document.querySelectorAll(".book-card")).find((card) => card.textContent.includes("EPUB Smoke Book")).click()',
+      'Array.from(document.querySelectorAll(".book-card")).find((card) => card.textContent.includes("The Odyssey")).querySelector(".favourite").click()',
+    );
+    await waitForEvaluation(
+      window,
+      'Array.from(document.querySelectorAll(".book-card")).find((card) => card.textContent.includes("The Odyssey"))?.querySelector(".favourite")?.classList.contains("saved")',
+      Boolean,
+      "Favourite toggle",
+    );
+    await captureDemoStep(window, "02-favourite.png");
+
+    await window.webContents.executeJavaScript(`(() => {
+      const input = document.querySelector('.search input');
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+      setter.call(input, 'Meditations');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    })()`);
+    await waitForEvaluation(
+      window,
+      '({cards:document.querySelectorAll(".book-card").length,text:document.querySelector(".book-card")?.textContent||""})',
+      (state) => state.cards === 1 && state.text.includes("Meditations"),
+      "Library search",
+    );
+    await captureDemoStep(window, "03-search.png");
+    await window.webContents.executeJavaScript(`(() => {
+      const input = document.querySelector('.search input');
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+      setter.call(input, '');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    })()`);
+    await waitForEvaluation(
+      window,
+      'document.querySelectorAll(".book-card").length',
+      (count) => count === 2,
+      "Search reset",
+    );
+
+    await window.webContents.executeJavaScript(
+      'Array.from(document.querySelectorAll(".book-card")).find((card) => card.textContent.includes("The Odyssey")).click()',
     );
     const epubState = await waitForEvaluation(
       window,
@@ -154,6 +200,7 @@ app
     if (!epubState.frame || epubState.toc < 1 || epubState.error) {
       throw new Error(`EPUB reader failed: ${JSON.stringify(epubState)}`);
     }
+    await captureDemoStep(window, "04-epub-reader.png");
 
     await window.webContents.executeJavaScript('document.querySelector(".reader-top button").click()');
     await waitForEvaluation(
@@ -163,7 +210,7 @@ app
       "Return to library",
     );
     await window.webContents.executeJavaScript(
-      'Array.from(document.querySelectorAll(".book-card")).find((card) => card.textContent.includes("Audit Volume")).click()',
+      'Array.from(document.querySelectorAll(".book-card")).find((card) => card.textContent.includes("Meditations")).click()',
     );
     const firstPage = await waitForEvaluation(
       window,
@@ -189,6 +236,7 @@ app
     );
     if (loadingIndicator) throw new Error("PDF loading indicator did not clear after rendering");
     await capture(window, process.env.MOUSEION_READER_SCREENSHOT);
+    await captureDemoStep(window, "05-pdf-reader.png");
 
     await window.webContents.executeJavaScript(
       'document.querySelector(".pdf-tools-group:first-child button:last-child").click()',
@@ -202,6 +250,17 @@ app
     if (secondPage.page !== "2" || secondPage.canvas < 100) {
       throw new Error(`Page traversal failed: ${JSON.stringify(secondPage)}`);
     }
+    consecutiveClearChecks = 0;
+    await waitForEvaluation(
+      window,
+      'Boolean(document.querySelector(".pdf-page-loading"))',
+      (rendering) => {
+        consecutiveClearChecks = rendering ? 0 : consecutiveClearChecks + 1;
+        return consecutiveClearChecks >= 5;
+      },
+      "Second PDF page loading indicator",
+    );
+    await captureDemoStep(window, "06-pdf-page-two.png");
 
     console.log("Electron smoke test passed: library load, EPUB render, PDF render, and page traversal");
     window.destroy();
