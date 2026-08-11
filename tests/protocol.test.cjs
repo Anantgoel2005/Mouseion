@@ -18,7 +18,10 @@ test("the book protocol serves only catalogued PDF and EPUB files", (t) => {
 
   const urlFor = (filePath) => `alexandria-file://local/${encodeURIComponent(filePath)}`;
 
-  assert.equal(resolveLibraryFileRequest(urlFor(allowedPdf), [allowedPdf]), allowedPdf);
+  assert.equal(
+    resolveLibraryFileRequest(urlFor(allowedPdf), [allowedPdf]),
+    fs.realpathSync.native(allowedPdf),
+  );
   assert.equal(resolveLibraryFileRequest(urlFor(unlistedPdf), [allowedPdf]), null);
   assert.equal(resolveLibraryFileRequest(urlFor(unlistedText), [unlistedText]), null);
   assert.equal(resolveLibraryFileRequest(urlFor(allowedPdf), []), null);
