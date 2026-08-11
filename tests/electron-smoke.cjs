@@ -74,6 +74,17 @@ async function epubFixture(filePath) {
 
 const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
+async function waitForEvaluation(window, expression, predicate, description, timeout = 15000) {
+  const deadline = Date.now() + timeout;
+  let value;
+  while (Date.now() < deadline) {
+    value = await window.webContents.executeJavaScript(expression);
+    if (predicate(value)) return value;
+    await wait(100);
+  }
+  throw new Error(`${description} timed out: ${JSON.stringify(value)}`);
+}
+
 async function capture(window, outputPath) {
   if (!outputPath) return;
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
@@ -122,45 +133,57 @@ app
       },
     });
     await window.loadFile(path.join(__dirname, "..", "desktop-dist", "index.html"));
-    await wait(700);
 
-    const cards = await window.webContents.executeJavaScript(
+    const cards = await waitForEvaluation(
+      window,
       'document.querySelectorAll(".book-card").length',
+      (count) => count === 2,
+      "Library rendering",
     );
-    if (cards !== 2) throw new Error(`Expected two imported books, found ${cards}`);
     await capture(window, process.env.MOUSEION_LIBRARY_SCREENSHOT);
 
     await window.webContents.executeJavaScript(
       'Array.from(document.querySelectorAll(".book-card")).find((card) => card.textContent.includes("EPUB Smoke Book")).click()',
     );
-    await wait(5000);
-    const epubState = await window.webContents.executeJavaScript(
+    const epubState = await waitForEvaluation(
+      window,
       '({frame:!!document.querySelector(".epub-viewer iframe"),iframes:document.querySelectorAll("iframe").length,toc:document.querySelectorAll(".reader aside button").length,error:document.querySelector(".reader-error")?.textContent||"",viewer:document.querySelector(".epub-viewer")?.innerHTML.slice(0,500)||""})',
+      (state) => state.error || (state.frame && state.toc >= 1),
+      "EPUB rendering",
     );
     if (!epubState.frame || epubState.toc < 1 || epubState.error) {
       throw new Error(`EPUB reader failed: ${JSON.stringify(epubState)}`);
     }
 
     await window.webContents.executeJavaScript('document.querySelector(".reader-top button").click()');
-    await wait(300);
+    await waitForEvaluation(
+      window,
+      'document.querySelectorAll(".book-card").length',
+      (count) => count === 2,
+      "Return to library",
+    );
     await window.webContents.executeJavaScript(
       'Array.from(document.querySelectorAll(".book-card")).find((card) => card.textContent.includes("Audit Volume")).click()',
     );
-    await wait(2500);
-    const firstPage = await window.webContents.executeJavaScript(
+    const firstPage = await waitForEvaluation(
+      window,
       '({canvas:document.querySelector(".pdf-page-stage canvas")?.width||0,error:document.querySelector(".reader-error")?.textContent||"",page:document.querySelector(".pdf-tools-group input")?.value,toolbar:!!document.querySelector(".pdf-toolbar")})',
+      (state) => state.error || (state.toolbar && state.canvas >= 100 && state.page === "1"),
+      "First PDF page rendering",
     );
     if (!firstPage.toolbar || firstPage.canvas < 100 || firstPage.error || firstPage.page !== "1") {
       throw new Error(`PDF reader failed: ${JSON.stringify(firstPage)}`);
     }
-    for (let attempt = 0; attempt < 20; attempt += 1) {
-      const rendering = await window.webContents.executeJavaScript(
-        'Boolean(document.querySelector(".pdf-page-loading"))',
-      );
-      if (!rendering) break;
-      await wait(100);
-    }
-    await wait(200);
+    let consecutiveClearChecks = 0;
+    await waitForEvaluation(
+      window,
+      'Boolean(document.querySelector(".pdf-page-loading"))',
+      (rendering) => {
+        consecutiveClearChecks = rendering ? 0 : consecutiveClearChecks + 1;
+        return consecutiveClearChecks >= 5;
+      },
+      "PDF loading indicator",
+    );
     const loadingIndicator = await window.webContents.executeJavaScript(
       'Boolean(document.querySelector(".pdf-page-loading"))',
     );
@@ -170,9 +193,11 @@ app
     await window.webContents.executeJavaScript(
       'document.querySelector(".pdf-tools-group:first-child button:last-child").click()',
     );
-    await wait(900);
-    const secondPage = await window.webContents.executeJavaScript(
+    const secondPage = await waitForEvaluation(
+      window,
       '({page:document.querySelector(".pdf-tools-group input").value,canvas:document.querySelector(".pdf-page-stage canvas").width})',
+      (state) => state.page === "2" && state.canvas >= 100,
+      "Second PDF page rendering",
     );
     if (secondPage.page !== "2" || secondPage.canvas < 100) {
       throw new Error(`Page traversal failed: ${JSON.stringify(secondPage)}`);
