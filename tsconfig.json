@@ -12,7 +12,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "types": ["node"]
+    "types": ["node", "vite/client"]
   },
   "include": ["app/**/*.ts", "app/**/*.tsx", "desktop/**/*.ts", "desktop/**/*.tsx", "vite.desktop.config.ts"],
   "exclude": ["node_modules", "desktop-dist", "release"]
