@@ -22,7 +22,7 @@
     "verify": "npm run typecheck && npm test && npm run smoke && npm audit --audit-level=high"
   },
   "dependencies": {
-    "epubjs": "0.3.93",
+    "epubjs": "0.4.2",
     "jszip": "^3.10.1",
     "pdfjs-dist": "^6.2.108",
     "react": "^19.2.8",
